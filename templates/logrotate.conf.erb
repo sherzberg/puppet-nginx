@@ -1,0 +1,24 @@
+# Managed by Puppet
+
+<%= log_dir %>/*.log {
+  daily
+  dateext
+  dateformat .%Y-%m-%d
+  missingok
+  rotate 365
+  compress
+  delaycompress
+  create 0640 www-data adm
+  sharedscripts
+  prerotate
+    if [ -d /etc/logrotate.d/httpd-prerotate ]; then \
+      run-parts /etc/logrotate.d/httpd-prerotate; \
+    fi; \
+  endscript
+  postrotate
+    [ ! -f /var/run/nginx.pid ] || kill -USR1 `cat /var/run/nginx.pid`
+    CUR=`date +%Y-%m-%d`
+    for i in `ls <%= log_dir %>/*.log.$CUR`; do mv $i `echo $i | rev | \
+      cut -f2- -d. | rev`.`date +%Y-%m-%d --date='yesterday'`; done
+  endscript
+}
