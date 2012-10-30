@@ -25,6 +25,15 @@ class nginx::config {
     notify  => Exec['nginx_graceful'],
   }
 
+  file { '/etc/nginx/conf.d/status.conf':
+    ensure  => present,
+    mode    => '0644',
+    owner   => 'root',
+    group   => 'root',
+    content => template('nginx/status.conf.erb'),
+    notify  => Exec['nginx_graceful'],
+  }
+
   file { '/var/www':
     ensure  => directory,
     mode    => '0755',
