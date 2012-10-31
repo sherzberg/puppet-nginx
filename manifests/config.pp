@@ -2,6 +2,7 @@ class nginx::config {
 
   Class['nginx::install'] -> Nginx::Vhost <| |>
   Class['nginx::install'] -> Nginx::Upstream <| |>
+  Nginx::Upstream <| |>   -> Nginx::Vhost <| |>
 
   Nginx::Vhost <| |>    ~> Exec['nginx_graceful']
   Nginx::Upstream <| |> ~> Exec['nginx_graceful']
