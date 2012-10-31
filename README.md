@@ -11,14 +11,8 @@ Installs and manages Nginx.
 
 **flavor** — Nginx flavor to install. light/full/extras/passenger. Default: light
 
-**ssl** — Enable SSL. Default: disabled
-
-**cert** — SSL certificate to use. Dir from files/ssl/${dir}. Default: wildcard
-
 	class { 'nginx':
 	  flavor => 'extras',
-	  ssl    => true,
-	  cert   => 'qa',
 	}
 
 ### nginx::vhost
@@ -31,7 +25,13 @@ Manages Nginx virtual hosts.
 
 **listen** — Port to listen on. Default: 80
 
-**ssl** — Enable SSL. Also enables HTTP to HTTPS redirection. Default: disabled
+**ssl** — Enable SSL. Default: disabled
+
+**ssl_redirect** — Redirect HTTP to HTTPS. Default: disabled
+
+**ssl_cert** — SSL certificate. Default: none
+
+**ssl_key** — SSL key. Default: none
 
 **config** — Name of virtual host template from templates/vhosts. Default: disabled
 
@@ -49,22 +49,23 @@ Manages Nginx virtual hosts.
 
 **environment** — Set ENVIRONMENT variable. Default: none
 
-**unicorn** — Enable Unicorn, path to socket. Default: disabled
-
-**gunicorn** — Enable Gunicorn, path to socket. Default: disabled
+**upstream** — Upstream name. Default: disabled
 
 **deny** — List of "403 Forbidden" locations. Default: disabled
 
 	nginx::vhost { 'example.com':
-	  ensure      => present,
-	  listen      => '443',
-	  ssl         => true,
-	  aliases     => [ 'sub1.example.com', 'sub2.example.com' ],
-	  doc_dir     => '/var/www/example.com/current',
-	  log_dir     => '/var/www/example.com/log',
-	  proxy_to    => '8080',
-	  redirect_to => '/app',
-	  deny        => [ 'bin', 'conf' ],
+	  ensure       => present,
+	  listen       => '443',
+	  ssl          => true,
+	  ssl_redirect => true,
+	  ssl_cert     => '/var/www/app/certs/example.com.crt',
+	  ssl_key      => '/var/www/app/certs/example.com.key',
+	  aliases      => [ 'sub1.example.com', 'sub2.example.com' ],
+	  doc_dir      => '/var/www/example.com/current',
+	  log_dir      => '/var/www/example.com/log',
+	  proxy_to     => '8080',
+	  redirect_to  => '/app',
+	  deny         => [ 'bin', 'conf' ],
 	}
 
 ### nginx::logrotate
@@ -78,6 +79,19 @@ Manages Nginx log rotation.
 	nginx::logrotate { 'example.com':
 	  ensure  => present,
 	  log_dir => '/var/www/example.com/log',
+	}
+
+### nginx::upstream
+
+Manages Nginx upstreams.
+
+**ensure** — present/disabled/absent. Default: present
+
+**server** — Upstream server.
+
+	nginx::upstream { 'unicorn':
+	  ensure => present,
+	  server => 'unix:/var/run/unicorn.socket fail_timeout=0',
 	}
 
 ## Authors

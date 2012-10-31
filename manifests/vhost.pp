@@ -15,7 +15,16 @@
 #  Port to listen on. Default: 80
 #
 # [*ssl*]
-#  Enable SSL. Also enables HTTP to HTTPS redirection. Default: disabled
+#  Enable SSL. Default: disabled
+#
+# [*ssl_redirect*]
+#  Redirect HTTP to HTTPS. Default: disabled
+#
+# [*ssl_cert*]
+#  SSL certificate. Default: none
+#
+# [*ssl_key*]
+#  SSL key. Default: none
 #
 # [*config*]
 #  Name of virtual host template from templates/vhosts. Default: disabled
@@ -41,11 +50,8 @@
 # [*environment*]
 #  Set ENVIRONMENT variable. Default: none
 #
-# [*unicorn*]
-#  Enable Unicorn, path to socket. Default: disabled
-#
-# [*gunicorn*]
-#  Enable Gunicorn, path to socket. Default: disabled
+# [*upstream*]
+#  Upstream name. Default: disabled
 #
 # [*deny*]
 #  List of "403 Forbidden" locations. Default: disabled
@@ -53,15 +59,18 @@
 # === Examples
 #
 # nginx::vhost { 'example.com':
-#   ensure      => present,
-#   listen      => '443',
-#   ssl         => true,
-#   aliases     => [ 'sub1.example.com', 'sub2.example.com' ],
-#   doc_dir     => '/var/www/example.com/current',
-#   log_dir     => '/var/www/example.com/log',
-#   proxy_to    => '8080',
-#   redirect_to => '/app',
-#   deny        => [ 'bin', 'conf' ],
+#   ensure       => present,
+#   listen       => '443',
+#   ssl          => true,
+#   ssl_redirect => true,
+#   ssl_cert     => '/var/www/app/certs/example.com.crt',
+#   ssl_key      => '/var/www/app/certs/example.com.key',
+#   aliases      => [ 'sub1.example.com', 'sub2.example.com' ],
+#   doc_dir      => '/var/www/example.com/current',
+#   log_dir      => '/var/www/example.com/log',
+#   proxy_to     => '8080',
+#   redirect_to  => '/app',
+#   deny         => [ 'bin', 'conf' ],
 # }
 #
 # === Authors
@@ -69,22 +78,33 @@
 # Sergey Stankevich
 #
 define nginx::vhost (
-  $ensure      = present,
-  $def_vhost   = false,
-  $listen      = '80',
-  $ssl         = false,
-  $config      = false,
-  $aliases     = [],
-  $doc_dir     = false,
-  $log_dir     = $nginx::params::log_dir,
-  $proxy_to    = false,
-  $redirect_to = false,
-  $php         = false,
-  $environment = false,
-  $unicorn     = false,
-  $gunicorn    = false,
-  $deny        = false,
+  $ensure       = present,
+  $def_vhost    = false,
+  $listen       = '80',
+  $ssl          = false,
+  $ssl_redirect = false,
+  $ssl_cert     = false,
+  $ssl_key      = false,
+  $config       = false,
+  $aliases      = [],
+  $doc_dir      = false,
+  $log_dir      = $nginx::params::log_dir,
+  $proxy_to     = false,
+  $redirect_to  = false,
+  $php          = false,
+  $environment  = false,
+  $upstream     = false,
+  $deny         = false,
 ) {
+
+  # Parameter validation
+  if $ssl and ! $ssl_cert {
+    fail('nginx::vhost: ssl_cert parameter must not be empty')
+  }
+
+  if $ssl and ! $ssl_key {
+    fail('nginx::vhost: ssl_key parameter must not be empty')
+  }
 
   $cfg = $title
   $av_cfg = "${nginx::params::av_dir}/${cfg}"

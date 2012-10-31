@@ -1,21 +1,10 @@
 # Managed by Puppet
 
-<% if unicorn -%>
-upstream unicorn {
-    server <%= unicorn %>;
-}
-
-<% end -%>
-<% if gunicorn -%>
-upstream gunicorn {
-    server <%= gunicorn %> fail_timeout=0;
-}
-
-<% end -%>
-<% if ssl -%>
+<% if ssl and ssl_redirect -%>
 server {
   listen 80<% if def_vhost and name == title -%> default_server<% end -%>;
   listen [::]:80<% if def_vhost and name == title -%> default_server ipv6only=on<% end -%>;
+
 <% if def_vhost and name == title -%>
   server_name _;
 <% else -%>
@@ -27,28 +16,29 @@ server {
 
   return 301 https://$host$request_uri;
 }
-
 <% end -%>
+
 server {
   listen <%= listen %><% if def_vhost -%> default_server<% end -%><% if ssl -%> ssl<% end -%>;
   listen [::]:<%= listen %><% if def_vhost -%> default_server ipv6only=on<% end -%><% if ssl -%> ssl<% end -%>;
+
 <% if def_vhost -%>
   server_name _;
 <% else -%>
   server_name <%= name %><% aliases.each do |name_alias| -%> <%= name_alias %><% end -%>;
 <% end -%>
-<% if doc_dir -%>
 
+<% if doc_dir -%>
   root <%= doc_dir %>;
 <% end -%>
 
   access_log <%= log_dir %>/<%= title %>.access.log;
   error_log <%= log_dir %>/<%= title %>.error.log;
-<% if ssl -%>
 
+<% if ssl -%>
   ssl on;
-  ssl_certificate <%= scope.lookupvar('nginx::params::ssl_cert') %>;
-  ssl_certificate_key <%= scope.lookupvar('nginx::params::ssl_key') %>;
+  ssl_certificate <%= ssl_cert %>;
+  ssl_certificate_key <%= ssl_key %>;
 
   ssl_prefer_server_ciphers on;
   ssl_protocols SSLv3 TLSv1 TLSv1.1 TLSv1.2;
@@ -58,8 +48,8 @@ server {
 
 <% if redirect_to -%>
   rewrite ^/$ <%= redirect_to %> permanent;
-
 <% end -%>
+
   location ~* /(.git|.svn|.subversion)/ {
     deny all;
   }
@@ -67,23 +57,25 @@ server {
   location = /health {
     access_log off;
   }
-<% if deny -%>
 
+<% if deny -%>
   location = \/(<% deny.each do |d| -%><%= d %>|<% end -%>) {
     deny all;
   }
 <% end -%>
-<% if proxy_to or unicorn or gunicorn -%>
+
+<% if proxy_to or upstream -%>
+  location ~* ^.*+\.(ico|css|js|gif|jp?g|png)$ {
+    expires max;
+  }
 
   location / {
-    try_files $uri<% if !unicorn and !gunicorn -%> $uri/<% end -%> @proxy;
+    try_files $uri<% if !upstream -%> $uri/<% end -%> @proxy;
   }
 
   location @proxy {
-<% if unicorn -%>
-    proxy_pass        http://unicorn;
-<% elsif gunicorn -%>
-    proxy_pass        http://gunicorn;
+<% if upstream -%>
+    proxy_pass        http://<%= upstream %>;
 <% else -%>
     proxy_pass        http://127.0.0.1:<%= proxy_to %>$request_uri;
 <% end -%>
@@ -91,10 +83,11 @@ server {
     proxy_set_header  Host $host;
     proxy_set_header  X-Real-IP $remote_addr;
     proxy_set_header  X-Forwarded-For $proxy_add_x_forwarded_for;
+<% if ssl -%>
     proxy_set_header  X-FORWARDED_PROTO https;
+<% end -%>
   }
 <% elsif php -%>
-
   location / {
     try_files $uri $uri/ /index.php;
   }

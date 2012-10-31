@@ -2,27 +2,15 @@
 #
 # Installs and manages Nginx.
 #
-# === Notes
-#
-# Module uses Dotdeb (http://www.dotdeb.org/instructions/) Nginx packages.
-#
 # === Parameters
 #
 # [*flavor*]
 #  Nginx flavor to install (light, full, extras, passenger). Default: light
 #
-# [*ssl*]
-#  Enable SSL. Default: disabled
-#
-# [*cert*]
-#  SSL certificate to use. Dir from files/ssl/${dir}. Default: wildcard
-#
 # === Examples
 #
 # class { 'nginx':
 #   flavor => 'extras',
-#   ssl    => true,
-#   cert   => 'qa',
 # }
 #
 # === Authors
@@ -31,8 +19,6 @@
 #
 class nginx (
   $flavor = 'light',
-  $ssl    = false,
-  $cert   = 'wildcard'
 ) {
 
   # Compatibility check
