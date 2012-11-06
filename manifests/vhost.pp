@@ -140,8 +140,12 @@ define nginx::vhost (
           File[$av_cfg] { content => template('nginx/vhost.erb') }
         }
 
-        default: {
+        true: {
           File[$av_cfg] { content => template("nginx/vhosts/${cfg}.erb") }
+        }
+
+        default: {
+          File[$av_cfg] { content => $config }
         }
       }
 

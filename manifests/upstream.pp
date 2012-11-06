@@ -33,8 +33,8 @@ define nginx::upstream (
   }
 
   $cfg = $title
-  $av_cfg = "${nginx::params::av_dir}/${cfg}"
-  $en_cfg = "${nginx::params::en_dir}/${cfg}"
+  $av_cfg = "${nginx::params::av_dir}/upstream-${cfg}"
+  $en_cfg = "${nginx::params::en_dir}/upstream-${cfg}"
 
   case $ensure {
     present: {
@@ -46,7 +46,7 @@ define nginx::upstream (
         content => template('nginx/upstream.erb'),
       }
 
-      exec { "nginx_enable_${cfg}":
+      exec { "nginx_enable_upstream_${cfg}":
         command => "ln -s ${av_cfg} ${en_cfg}",
         creates => $en_cfg,
         require => File[$av_cfg],
@@ -54,14 +54,14 @@ define nginx::upstream (
     }
 
     disabled: {
-      exec { "nginx_disable_${cfg}":
+      exec { "nginx_disable_upstream_${cfg}":
         command => "rm ${en_cfg}",
         onlyif  => "test -L ${en_cfg}",
       }
     }
 
     absent: {
-      exec { "nginx_purge_${cfg}":
+      exec { "nginx_purge_upstream_${cfg}":
         command => "rm ${av_cfg} ${en_cfg}",
         onlyif  => "test -f ${av_cfg} || test -L ${en_cfg}",
       }
