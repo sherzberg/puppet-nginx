@@ -5,7 +5,7 @@ class nginx::config {
   Nginx::Upstream <| |>   -> Nginx::Vhost <| |>
 
   Nginx::Vhost <| |>    ~> Exec['nginx_graceful']
-  Nginx::Upstream <| |> ~> Exec['nginx_graceful']
+  Nginx::Upstream <| |> ~> Service['nginx']
 
   service { 'nginx':
     ensure     => running,
