@@ -32,7 +32,7 @@ server {
   root <%= doc_dir %>;
 <% end -%>
 
-  access_log <%= log_dir %>/<%= title %>.access.log main buffer=16k;
+  access_log <%= log_dir %>/<%= title %>.access.log;
   error_log <%= log_dir %>/<%= title %>.error.log;
 
 <% if ssl -%>
