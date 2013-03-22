@@ -107,4 +107,18 @@ server {
 <% end -%>
   }
 <% end -%>
+
+<% if maintenance_file -%>
+  if (-f <%= maintenance_file %> ) {
+    return 503;
+  }
+
+  error_page 503 @maintenance;
+
+  location @maintenance {
+    if ($uri !~ ^/(media|css|js)/) {
+      rewrite ^(.*)$ /503.html break;
+    }
+  }
+<% end -%>
 }

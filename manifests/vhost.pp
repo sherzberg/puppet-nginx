@@ -56,6 +56,8 @@
 # [*deny*]
 #  List of "403 Forbidden" locations. Default: disabled
 #
+# [*maintenance_file*]
+#  Location of the maintenance file to check for. Default: none
 # === Examples
 #
 # nginx::vhost { 'example.com':
@@ -78,23 +80,24 @@
 # Sergey Stankevich
 #
 define nginx::vhost (
-  $ensure       = present,
-  $def_vhost    = false,
-  $listen       = '80',
-  $ssl          = false,
-  $ssl_redirect = false,
-  $ssl_cert     = false,
-  $ssl_key      = false,
-  $config       = false,
-  $aliases      = [],
-  $doc_dir      = false,
-  $log_dir      = $nginx::params::log_dir,
-  $proxy_to     = false,
-  $redirect_to  = false,
-  $php          = false,
-  $environment  = false,
-  $upstream     = false,
-  $deny         = false,
+  $ensure           = present,
+  $def_vhost        = false,
+  $listen           = '80',
+  $ssl              = false,
+  $ssl_redirect     = false,
+  $ssl_cert         = false,
+  $ssl_key          = false,
+  $config           = false,
+  $aliases          = [],
+  $doc_dir          = false,
+  $log_dir          = $nginx::params::log_dir,
+  $proxy_to         = false,
+  $redirect_to      = false,
+  $php              = false,
+  $environment      = false,
+  $upstream         = false,
+  $deny             = false,
+  $maintenance_file = false,
 ) {
 
   # Parameter validation
@@ -104,6 +107,10 @@ define nginx::vhost (
 
   if $ssl and ! $ssl_key {
     fail('nginx::vhost: ssl_key parameter must not be empty')
+  }
+
+  if ! $doc_dir and $maintenance_file {
+    fail('nginx:vhost: doc_dir parameter must not be empty because you have specified a maintenance file')
   }
 
   $cfg = $title
